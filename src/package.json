@@ -1,0 +1,29 @@
+{
+  "name": "youtube-audio-player",
+  "version": "0.0.1",
+  "description": "Hello YouTube",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mson0129/YouTubeAudioPlayer.git"
+  },
+  "keywords": [
+    "YouTube"
+  ],
+  "author": "Michael Son",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mson0129/YouTubeAudioPlayer/issues"
+  },
+  "homepage": "https://github.com/mson0129/YouTubeAudioPlayer#readme",
+  "devDependencies": {
+    "electron": "^15.0.0"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^4.4.0",
+    "ytdl-core": "^4.9.1"
+  }
+}
