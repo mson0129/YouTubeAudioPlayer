@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Audio Player</title>
+        <script>
+            const ipcRenderer = require('electron').ipcRenderer;
+
+            document.addEventListener("DOMContentLoaded", (e) => {
+                const player = document.getElementById('player');
+                player.addEventListener('timeupdate', (e) => {
+                    send_player_status();
+                });
+
+                player.addEventListener('ended', (e) => {
+                    get_next_item();
+                });
+
+                function send_player_status() {
+                    ipcRenderer.send(
+                        'update_player_status',
+                        {
+                            src: player.hasAttribute('src') ? player.getAttribute('src') : null,
+                            paused: player.paused,
+                            loop: player.loop,
+                            current_time: player.currentTime,
+                            duration: player.duration,
+                            muted: player.muted,
+                            volume: player.volume,
+                        }
+                    );
+                }
+
+                function get_next_item() {
+                    ipcRenderer.send('get_next_item');
+                }
+
+                ipcRenderer.on('get_player_status', (event) => {
+                    send_player_status();
+                });
+
+                ipcRenderer.on('control_player', (event, action, volume = 0) => {
+                    console.log(player);
+                    console.log(action, volume);
+
+                    if (action == 'play') {
+                        player.play();
+                    } else if (action == 'pause') {
+                        player.pause();
+                    } else if (action == 'mute') {
+                        player.muted = true;
+                    } else if (action == 'unmute') {
+                        player.muted = false;
+                    } else if (action == 'stop') {
+                        player.pause();
+                        player.currentTime = 0;
+                    } else if (action == 'loop') {
+                        player.loop = true;
+                    } else if (action == 'unloop') {
+                        player.loop = false;
+                    } else if (action == 'rewind') {
+                        player.currentTime -= volume;
+                    } else if (action == 'fastforward') {
+                        player.currentTime += volume;
+                    } else if (action == 'volume') {
+                        player.volume = volume / 100;
+                    } else if (action == 'volume_down') {
+                        player.volume -= volume;
+                    } else if (action == 'volume_up') {
+                        player.volume += volume;
+                    }
+                    send_player_status();
+                });
+
+                ipcRenderer.on('set_player_media', (event, src) => {
+                    player.setAttribute('src', src);
+                    send_player_status();
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Audio Player</h1>
+        <audio id='player' controls></audio>
+        <script>
+        </script>
+    </body>
+</html>

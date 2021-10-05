@@ -1,0 +1,16 @@
+@charset "UTF-8";
+/* Reset */
+* {margin: 0; padding: 0; outline: none;}
+html, body{height:100%;}
+body {margin:0; font-size: 16px; font-family: Apple SD 산돌고딕 Neo, Apple SD Gothic Neo, 맑은 고딕, Malgun Gothic, AppleGothic, Apple Gothic, 돋움, Dotum, sans-serif; background:#fff; color:#000;}
+h1, h2, h3, h4, h5, h6 {font-size: 1em; font-weight: normal;}
+p {font-family: serif; text-align: justify;}
+address {font-style:normal;}
+img, fieldset {border:0; margin:0; padding:0;}
+form, textarea, select, button{margin:0; font-size: 1em;}
+legend {position:absolute; width:0; height:0; overflow:hidden; font-size:0; line-height:0; visibility:hidden; z-index:-1;}
+hr {display:none;}
+sup, sub {font-style:normal; font-weight:normal;}
+ul, ol {list-style: none;}
+a {text-decoration: none;}
+a:hover {text-decoration: underline;}

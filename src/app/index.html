@@ -1,35 +1,241 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title></title>
+        <title>YouTube Audio Player</title>
         <script type='text/javascript'>
-            const {ipcRenderer} = require('electron');
+            const ipcRenderer = require('electron').ipcRenderer;
             const ytdl = require('ytdl-core');
-            const fs = require('fs')
+            let now_playing = {};
+            let controllers = {
+                loop: false
+            }
 
-            function get_audio(url) {
-                var info = ytdl.getInfo(url)
-                const tracker = {
-                    start: Date.now(),
-                    audio: { downloaded: 0, total: Infinity },
-                    merged: { frame: 0, speed: '0x', fps: 0 }
-                };
-                var writeStream = fs.createWriteStream('./output.mp4');
-                const audio = ytdl(
-                    url,
-                    {
-                        filter: 'audioonly'
+
+            function add_item() {
+                ipcRenderer.send('add_item', document.getElementById('youtube-url').value);
+            }
+
+            //https://css-tricks.com/lets-create-a-custom-audio-player/
+            function prev_audio_item() {
+                const player = document.getElementById('player');
+                now_playing_items = Array.from(document.getElementById('now-playing-list').children);
+                let audio_item;
+                now_playing_items.forEach(element => {
+                    if (element.dataset.uid == now_playing.uid) {
+                        now_playing_index = Array.from(document.getElementById('now-playing-list').children).indexOf(element);
+                        if (now_playing_index == 0) {
+                            stop_audio_item();
+                        } else {
+                            audio_item = Array.from(document.getElementById('now-playing-list').children)[now_playing_index - 1]
+                        }
                     }
-                )
-                .on('progress', (_, downloaded, total) => {
-                    tracker.audio = { downloaded, total };
-                    console.log(downloaded/total, downloaded, total);
-                })
-                .pipe(writeStream)
+                });
+                if (audio_item !== undefined)
+                    select(audio_item);
+            }
+            function next_audio_item() {
+                const player = document.getElementById('player');
+                now_playing_items = Array.from(document.getElementById('now-playing-list').children);
+                let audio_item;
+                now_playing_items.forEach(element => {
+                    if (element.dataset.uid == now_playing.uid) {
+                        now_playing_index = Array.from(document.getElementById('now-playing-list').children).indexOf(element);
+                        if (now_playing_index == Array.from(document.getElementById('now-playing-list').children).length - 1) {
+                            if (document.getElementById('controls-loop').classList.contains('all')) {
+                                audio_item = Array.from(document.getElementById('now-playing-list').children)[0];
+                            } else {
+                                stop_audio_item();
+                            }
+                        } else {
+                            audio_item = Array.from(document.getElementById('now-playing-list').children)[now_playing_index + 1]
+                        }
+                    }
+                });
+                if (audio_item !== undefined)
+                    select(audio_item);
+            }
+            function mute_volume() {
+                const player = document.getElementById('player');
+                const controls = document.getElementById('controls-mute');
+
+                if (player.muted) {
+                    controls.classList.remove('mute')
+                    player.muted = false
+                } else {
+                    controls.classList.add('mute')
+                    player.muted = true
+                }
+            }
+            function loop_audio_items() {
+                const player = document.getElementById('player');
+                const controls = document.getElementById('controls-loop');
+
+                if (controls.classList.contains('all')) {
+                    //All -> One
+                    controls.classList.remove('all');
+                    controls.classList.add('one');
+                    player.loop = true;
+                } else if (controls.classList.contains('one')) {
+                    //One -> No Loop
+                    controls.classList.remove('one');
+                    player.loop = false;
+                } else {
+                    //No Loop -> all
+                    controls.classList.add('all');
+                    player.loop = false;
+                }
+            }
+            function shuffle_audio_items() {
+                const controls = document.getElementById('controls-shuffle');
+
+                if (controls.classList.contains('shuffle')) {
+                    controls.classList.remove('shuffle');
+                } else {
+                    controls.classList.add('shuffle');
+                }
+            }
+            function play_audio_item() {
+                const player = document.getElementById('player');
+                const controls = document.getElementById('controls-pause');
+
+                if (player.paused) {
+                    controls.classList.add('pause')
+                    player.play();
+                } else {
+                    controls.classList.remove('pause')
+                    player.pause();
+                }
+            }
+            function stop_audio_item() {
+                const player = document.getElementById('player');
+                const controls = document.getElementById('controls-pause');
+
+                controls.classList.remove('pause');
+                player.pause();
+                player.removeAttribute('src');
+                now_playing = {};
+            }
+
+            function add_audio_item() {
+                //add_item();
+
+                prom = new Promise((resolve, reject) => {
+                    try {
+                        info = ytdl.getInfo(
+                            document.getElementById('youtube-url').value,
+                            {lang: 'ko'}
+                        );
+                        resolve(info);
+                    } catch (error) {
+                        reject()
+                    } finally {
+                        document.getElementById('youtube-url').value = '';
+                    }
+                });
+                prom.then((info) => {
+                    let format = ytdl.chooseFormat(info.formats, { quality: '140' });
+
+                    var template = document.getElementById('new-audio-item')
+                    var clone = document.importNode(template.content, true);
+                    var article = clone.querySelector('article')
+
+                    console.log(info); //Debug
+                    console.log(format); //Debug
+                    
+                    article.dataset.thumbnail = info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1].url;
+                    article.dataset.title = info.videoDetails.title;
+                    article.dataset.vid = info.videoDetails.videoId;
+                    article.dataset.mime = format.mimeType;
+                    article.dataset.time = info.videoDetails.lengthSeconds;
+                    article.dataset.uid = Math.random().toString(36).replace(/[^a-z]+/g, '');
+
+                    var h3 = clone.querySelector('h3');
+                    h3.innerText = info.videoDetails.title;
+
+                    var span = clone.querySelector('span');
+                    span.innerText = info.videoDetails.lengthSeconds >= 3600 ? new Date(info.videoDetails.lengthSeconds * 1000).toISOString().substr(11, 8) : new Date(info.videoDetails.lengthSeconds * 1000).toISOString().substr(14, 5);
+
+                    var now_playing_list = document.getElementById('now-playing-list');
+                    now_playing_list.appendChild(clone);
+
+                    if (document.getElementById('player').paused) {
+                        now_playing_items = Array.from(document.getElementById('now-playing-list').children);
+                        select(now_playing_items[now_playing_items.length - 1]);
+                    }
+                });
+            }
+            function select(audio_item) {
+                const player = document.getElementById('player');
+                console.log(audio_item.dataset.uid);
+                
+                prom = new Promise((resolve, reject) => {
+                    info = ytdl.getInfo(
+                        audio_item.dataset.vid,
+                        {lang: 'ko'}
+                    );
+                    resolve(info);
+                });
+                prom.then((info) => {
+                    let format = ytdl.chooseFormat(info.formats, { quality: '140' });
+                    player.setAttribute('src', format.url);
+                    player.setAttribute('type', format.mimeType);
+                    now_playing.uid = audio_item.dataset.uid;
+                    play_audio_item();
+                });
             }
         </script>
+        <link rel="stylesheet" type="text/css" href="./resources/css/reset.css" />
+        <link rel="stylesheet" type="text/css" href="./resources/css/app.css" />
     </head>
     <body>
-        helloworld
+        <h1>YouTube Audio Player</h1>
+        <header id='controls'>
+            <div>
+                <button id='controls-shuffle' onclick='shuffle_audio_items();' style='display: none;'>Shuffle</button>
+                <button id='controls-loop' onclick='loop_audio_items();'>Repeat</button>
+                <button id='controls-previous' onclick='prev_audio_item();'>Prev</button>
+                <button id='controls-pause' onclick='play_audio_item();'>Play/Stop</button>
+                <button id='controls-next' onclick='next_audio_item();'>Next</button>
+            </div>
+            <div>
+                <button id='controls-mute' onclick='mute_volume();'>Mute</button>
+                <input type='range' id='controls-volume' max='100' value='100' />
+            </div>
+            <audio id='player'></audio>
+        </header>
+        <section id='now-playing-list'>
+        </section>
+        <footer>
+            <input id='youtube-url' type='text' placeholder='추가하려면 YouTube 영상 주소 입력 후 엔터' />
+            <button>Add</button>
+        </footer>
+        <template id='new-audio-item'>
+            <article class='audio_item' onclick='select(this);'>
+                <div class='audio_item_text'>
+                    <h3 class='audio_item_text_title'></h3>
+                </div>
+                <div class='audio_item_time'>
+                    <span class='audio_item_time_text'></span>
+                </div>
+            </article>
+        </template>
+        <script>
+            /*
+            document.getElementById('youtube-url').addEventListener('blur', (e) => {
+                add_audio_item();
+            });
+            */
+            document.getElementById('youtube-url').addEventListener('keydown', (e) => {
+                if (e.keyCode == 13) {
+                    add_audio_item();
+                }
+            });
+            document.getElementById('player').addEventListener('ended', (e) => {
+                next_audio_item();
+            });
+            document.getElementById('controls-volume').addEventListener('input', (e) => {
+                document.getElementById('player').volume = e.target.value / 100;
+            });
+        </script>
     </body>
 </html>
