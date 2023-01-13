@@ -1,65 +1,26 @@
 {
-  "name": "youtube-audio-player",
-  "version": "0.0.1",
-  "description": "Hello YouTube",
+  "name": "youtube_audio_player",
+  "version": "1.0.0",
+  "description": "",
   "main": "main.js",
   "scripts": {
+    "test": "test",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mson0129/YouTubeAudioPlayer.git"
-  },
-  "keywords": [
-    "YouTube"
-  ],
   "author": "Michael Son",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/mson0129/YouTubeAudioPlayer/issues"
-  },
-  "homepage": "https://github.com/mson0129/YouTubeAudioPlayer#readme",
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.61",
-    "@electron-forge/maker-deb": "^6.0.0-beta.61",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.61",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
-    "@electron-forge/maker-zip": "^6.0.0-beta.61",
-    "electron": "^15.0.0",
-    "electron-rebuild": "^3.2.3",
-    "trim-newlines": "^4.0.2"
+    "@electron-forge/cli": "^6.0.4",
+    "@electron-forge/maker-deb": "^6.0.4",
+    "@electron-forge/maker-rpm": "^6.0.4",
+    "@electron-forge/maker-squirrel": "^6.0.4",
+    "@electron-forge/maker-zip": "^6.0.4",
+    "electron": "^22.0.2"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "ytdl-core": "^4.9.1"
-  },
-  "config": {
-    "forge": {
-      "packagerConfig": {},
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "youtube_audio_player"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin"
-          ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
-        }
-      ]
-    }
+    "ytdl-core": "^4.11.2"
   }
 }
